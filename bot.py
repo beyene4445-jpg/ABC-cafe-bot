@@ -6,9 +6,10 @@ from aiogram.filters import Command
 from aiogram.types import LabeledPrice, PreCheckoutQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiohttp import web
 
-# ቶከኖችህ
+# ቶከኖችህ እና የአድሚን ID
 BOT_TOKEN = "8949760536:AAH-ptN3CVOdG210xRYAeIJwIOib0Yoa-E8"
 PROVIDER_TOKEN = "6141645565:TEST:97h5BwIS5k3cutoKIQPp"
+ADMIN_CHAT_ID = 6120164042  # የአንተ የቴሌግራም ID እዚህ ገብቷል
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
@@ -26,9 +27,9 @@ user_carts = {}
 def get_menu_keyboard(chat_id):
     cart = user_carts.get(chat_id, {"burger": 0, "pizza": 0, "macchiato": 0})
     keyboard = [
-        [InlineKeyboardButton(text=f"🍔 burger (+1) [ያዘዙት፦ {cart['burger']}]", callback_data="add_burger")],
-        [InlineKeyboardButton(text=f"🍕 pizza (+1) [ያዘዙት፦ {cart['pizza']}]", callback_data="add_pizza")],
-        [InlineKeyboardButton(text=f"☕ macchiato (+1) [ያዘዙት፦ {cart['macchiato']}]", callback_data="add_macchiato")],
+        [InlineKeyboardButton(text=f"🍔 በርገር (+1) [ያዘዙት፦ {cart['burger']}]", callback_data="add_burger")],
+        [InlineKeyboardButton(text=f"🍕 ፒዛ (+1) [ያዘዙት፦ {cart['pizza']}]", callback_data="add_pizza")],
+        [InlineKeyboardButton(text=f"☕ ማኪያቶ (+1) [ያዘዙት፦ {cart['macchiato']}]", callback_data="add_macchiato")],
         [InlineKeyboardButton(text="🛒 ሂሳብ ድምር ክፈል (Checkout)", callback_data="checkout")],
         [InlineKeyboardButton(text="🗑️ ቅርጫት አጽዳ (Clear)", callback_data="clear_cart")]
     ]
@@ -93,14 +94,45 @@ async def checkout_handler(callback_query: CallbackQuery):
 async def pre_checkout_handler(pre_checkout_query: PreCheckoutQuery):
     await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
 
+# ክፍያ ሲፈጸም ወደ አድሚን እና ወደ ደንበኛው መልእክት የሚልከው ዋናው ክፍል
 @dp.message(lambda message: message.successful_payment is not None)
 async def successful_payment_handler(message: Message):
     chat_id = message.chat.id
+    cart = user_carts.get(chat_id, {"burger": 0, "pizza": 0, "macchiato": 0})
+    
+    # የደንበኛው መረጃ
+    customer_name = message.from_user.full_name
+    customer_username = f"@{message.from_user.username}" if message.from_user.username else "የለውም"
+    total_amount = message.successful_payment.total_amount / 100 # ከሳንቲም ወደ ብር መቀየሪያ
+    
+    # የታዘዙ ምግቦች ዝርዝር ለአድሚን
+    order_details = []
+    for item, qty in cart.items():
+        if qty > 0:
+            order_details.append(f"• {MENU[item]['name']}፦ {qty} ፍሬ")
+    
+    order_str = "\n".join(order_details)
+    
+    # 1. ለአንተ (ለአድሚኑ/ለኩሽናው) የሚላክ መልእክት
+    admin_message = (
+        f"🚨 **አዲስ ትዕዛዝ በክፍያ ደርሷል!** 🚨\n\n"
+        f"👤 **ደንበኛ፦** {customer_name} ({customer_username})\n"
+        f"💵 **ጠቅላላ የተከፈለ፦** {total_amount:,.2f} ETB\n\n"
+        f"🛍️ **የታዘዙ ምግቦች ዝርዝር፦**\n{order_str}\n\n"
+        f"✅ ክፍያው በ Chapa አውቶማቲክ ሲስተም በኩል ሙሉ በሙሉ ተረጋግጧል!"
+    )
+    
+    try:
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_message, parse_mode="Markdown")
+    except Exception as e:
+        logging.error(f"Failed to send order notification to admin: {e}")
+
+    # 2. ለደንበኛው የሚላክ ማረጋገጫ እና ቅርጫቱን ባዶ ማድረጊያ
     user_carts[chat_id] = {"burger": 0, "pizza": 0, "macchiato": 0}
     await message.answer("🎉 ክፍያዎ አውቶማቲክ በሆነ መንገድ በተሳካ ሁኔታ ተረጋግጧል!\n\nትዕዛዝዎ ወደ ኩሽና ተላልፏል።")
 
 async def handle_render(request):
-    return web.Response(text="Bot is running with dynamic menu layout!")
+    return web.Response(text="Bot is running with dynamic menu and admin alerts!")
 
 async def start_web_server():
     app = web.Application()
