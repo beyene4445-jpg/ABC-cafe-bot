@@ -10,8 +10,8 @@ from aiohttp import web
 BOT_TOKEN = "8949760536:AAH-ptN3CVOdG210xRYAeIJwIOib0Yoa-E8"
 ADMIN_CHAT_ID = 6120164042
 
-# ⚠️ እውነተኛ ክፍያዎችን ለመቀበል ከ @BotFather ያገኘኸውን LIVE ቶከን እዚህ አስገባ
-PROVIDER_TOKEN = "እዚህ_ላይ_የእርስዎን_LIVE_PROVIDER_TOKEN_ያስገቡ"
+# ለጊዜው በሙከራ ደረጃ (Test Mode) የሚሰራው የ Chapa ቶከን
+PROVIDER_TOKEN = "6141645565:TEST:97h5BwIS5k3cutoKIQPp"
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
@@ -71,7 +71,7 @@ async def start_command(message: Message):
         "የምግብ ዝርዝር ለማየት እና ለማዘዝ /menu ይበሉ።\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
         "💻 **Developed by:** Petros Beyene (@peterdec2)\n"
-        "🚀 **Powered by:** Python & Chapa"
+        "🚀 **Powered by:** Python & Chapa (Test Mode)"
     )
     
     await message.answer(
@@ -177,7 +177,7 @@ async def successful_payment_handler(message: Message):
     await message.answer("🎉 ክፍያዎ አውቶማቲክ በሆነ መንገድ በተሳካ ሁኔታ ተረጋግጧል!\n\nትዕዛዝዎ ወደ ኩሽና ተላልፏል።")
 
 async def handle_render(request):
-    return web.Response(text="Bot is running smoothly. Developed by Petros Beyene.")
+    return web.Response(text="Bot is running smoothly in Test Mode. Developed by Petros Beyene.")
 
 async def start_web_server():
     app = web.Application()
