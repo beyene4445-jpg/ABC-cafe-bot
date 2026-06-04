@@ -8,8 +8,10 @@ from aiohttp import web
 
 # ቶከኖችህ እና የአድሚን ID
 BOT_TOKEN = "8949760536:AAH-ptN3CVOdG210xRYAeIJwIOib0Yoa-E8"
-PROVIDER_TOKEN = "6141645565:TEST:97h5BwIS5k3cutoKIQPp"
 ADMIN_CHAT_ID = 6120164042
+
+# ⚠️ እውነተኛ ክፍያዎችን ለመቀበል ከ @BotFather ያገኘኸውን LIVE ቶከን እዚህ አስገባ
+PROVIDER_TOKEN = "እዚህ_ላይ_የእርስዎን_LIVE_PROVIDER_TOKEN_ያስገቡ"
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=BOT_TOKEN)
@@ -50,7 +52,7 @@ def get_menu_keyboard(chat_id):
             keyboard.append(row)
             row = []
             
-    if row: # የተረፈ ካለ ይጨምረዋል
+    if row:
         keyboard.append(row)
         
     # የቁጥጥር በተኖች (Checkout & Clear)
@@ -62,10 +64,20 @@ def get_menu_keyboard(chat_id):
 @dp.message(Command("start"))
 async def start_command(message: Message):
     user_carts[message.chat.id] = {k: 0 for k in MENU}
-    # reply_markup=ReplyKeyboardRemove() የድሮውን ኪቦርድ በራሱ ጊዜ ያጠፋዋል
+    
+    # ሰላምታ እና ያንተን ስም የያዘ የክሬዲት መግለጫ
+    welcome_text = (
+        "እንኳን ወደ ABC ካፌ መደበኛ ማዘዣ ቦት በደህና መጡ! ☕🍔\n\n"
+        "የምግብ ዝርዝር ለማየት እና ለማዘዝ /menu ይበሉ።\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "💻 **Developed by:** Petros Beyene (@peterdec2)\n"
+        "🚀 **Powered by:** Python & Chapa"
+    )
+    
     await message.answer(
-        "እንኳን ወደ ABC ካፌ መደበኛ ማዘዣ ቦት በደህና መጡ! ☕🍔\n\nየምግብ ዝርዝር ለማየት እና ለማዘዝ /menu ይበሉ።",
-        reply_markup=ReplyKeyboardRemove()
+        text=welcome_text,
+        reply_markup=ReplyKeyboardRemove(),
+        parse_mode="Markdown"
     )
 
 @dp.message(Command("menu"))
@@ -165,7 +177,7 @@ async def successful_payment_handler(message: Message):
     await message.answer("🎉 ክፍያዎ አውቶማቲክ በሆነ መንገድ በተሳካ ሁኔታ ተረጋግጧል!\n\nትዕዛዝዎ ወደ ኩሽና ተላልፏል።")
 
 async def handle_render(request):
-    return web.Response(text="Bot is running smoothly with clean keyboard and 12 items!")
+    return web.Response(text="Bot is running smoothly. Developed by Petros Beyene.")
 
 async def start_web_server():
     app = web.Application()
