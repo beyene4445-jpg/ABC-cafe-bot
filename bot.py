@@ -3,7 +3,7 @@ import logging
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from aiogram.types import LabeledPrice, PreCheckoutQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.types import LabeledPrice, PreCheckoutQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardRemove
 from aiohttp import web
 
 # ቶከኖችህ እና የአድሚን ID
@@ -62,7 +62,11 @@ def get_menu_keyboard(chat_id):
 @dp.message(Command("start"))
 async def start_command(message: Message):
     user_carts[message.chat.id] = {k: 0 for k in MENU}
-    await message.answer("እንኳን ወደ ABC ካፌ መደበኛ ማዘዣ ቦት በደህና መጡ! ☕🍔\n\nየምግብ ዝርዝር ለማየት እና ለማዘዝ /menu ይበሉ።")
+    # reply_markup=ReplyKeyboardRemove() የድሮውን ኪቦርድ በራሱ ጊዜ ያጠፋዋል
+    await message.answer(
+        "እንኳን ወደ ABC ካፌ መደበኛ ማዘዣ ቦት በደህና መጡ! ☕🍔\n\nየምግብ ዝርዝር ለማየት እና ለማዘዝ /menu ይበሉ።",
+        reply_markup=ReplyKeyboardRemove()
+    )
 
 @dp.message(Command("menu"))
 async def menu_command(message: Message):
@@ -102,7 +106,7 @@ async def checkout_handler(callback_query: CallbackQuery):
     for item, qty in cart.items():
         if qty > 0:
             item_total = MENU[item]["price"] * qty
-            clean_name = MENU[item]["name"].split("(")[0].strip() # ምልክቶችን ለማፅዳት
+            clean_name = MENU[item]["name"].split("(")[0].strip()
             prices.append(LabeledPrice(label=f"{clean_name} x{qty}", amount=item_total))
             description_parts.append(f"{clean_name} ({qty} ፍሬ)")
             
@@ -161,7 +165,7 @@ async def successful_payment_handler(message: Message):
     await message.answer("🎉 ክፍያዎ አውቶማቲክ በሆነ መንገድ በተሳካ ሁኔታ ተረጋግጧል!\n\nትዕዛዝዎ ወደ ኩሽና ተላልፏል።")
 
 async def handle_render(request):
-    return web.Response(text="Bot is running smoothly with 12 Ethiopian menu items!")
+    return web.Response(text="Bot is running smoothly with clean keyboard and 12 items!")
 
 async def start_web_server():
     app = web.Application()
