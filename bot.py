@@ -246,18 +246,29 @@ async def kitchen_ready_handler(callback_query: CallbackQuery):
         f"📋 **ምግቦች፦**\n{order_str}"
     )
     
-    # ለካሺር እና ለደንበኛ ማሳወቂያ መላክ
+        # ለካሺር እና ለደንበኛ ማሳወቂያ መላክ
     try:
         await bot.send_message(
             chat_id=CASHIER_CHAT_ID, 
             text=f"✅ **የምግብ ዝግጅት አልቋል (ካሺር)**\n\n👤 ደንበኛ: {customer_name}\n🍽️ ምግብ ተሰርቶ ወጥቷል/ደርሷል!"
         )
+        
+        # ለደንበኛው የሚላከው የተስተካከለው ፎርማል መልዕክት
+        customer_message = (
+            f"🍽️ **የምግብ ዝግጅት ማሳወቂያ**\n\n"
+            f"✅ ምግቡ ባዘዙት መሰረት ተሰርቶ አልቋል!\n\n"
+            f"✨ **ደርሶዎ ከሆነ:** መልካም የምግብ ጊዜ ይሁንልዎ! 😋\n"
+            f"⏱️ **ካልደረሰዎት:** እባክዎ በፍጥነት እንዲደርስ ይሞክሩ! 🚶‍♂️"
+        )
+        
         await bot.send_message(
             chat_id=customer_chat_id, 
-            text=f"🎉 ምግብዎ ተሰርቶ አልቋል! መልካም ምገባ ይሁንልዎ! 🍔☕"
+            text=customer_message,
+            parse_mode="Markdown"
         )
     except Exception as e:
         logging.error(e)
+
         
     await callback_query.answer("ምግቡ መድረሱ ለካሺር እና ለደንበኛ ተነግሯል!")
 
