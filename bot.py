@@ -6,9 +6,14 @@ from aiogram.filters import Command
 from aiogram.types import LabeledPrice, PreCheckoutQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, ReplyKeyboardRemove
 from aiohttp import web
 
-# ቶከኖችህ እና የአድሚን ID
+# ቶከኖችህ እና የቻት ID ዎች
 BOT_TOKEN = "8949760536:AAH-ptN3CVOdG210xRYAeIJwIOib0Yoa-E8"
-ADMIN_CHAT_ID = 6120164042
+
+# 1. የካሺር ቻት ID (ገንዘብ እና አጠቃላይ ሂሳብ የሚደርሰው)
+CASHIER_CHAT_ID = 8053830568  # @peterdec2
+
+# 2. የኩሽና ቻት ID (ምግቦቹ ብቻ አዘጋጅተው እንዲደርሳቸው የሚፈልጉበት)
+KITCHEN_CHAT_ID = 8674073724  # የኩሽናውን ID እዚህጋ አስገባ (ለጊዜው በእጅህ እንዲሞከር በአንድ ላይ ተቀምጧል)
 
 # ለጊዜው በሙከራ ደረጃ (Test Mode) የሚሰራው የ Chapa ቶከን
 PROVIDER_TOKEN = "6141645565:TEST:97h5BwIS5k3cutoKIQPp"
@@ -47,7 +52,6 @@ def get_menu_keyboard(chat_id):
         btn = InlineKeyboardButton(text=btn_text, callback_data=f"add_{item}")
         row.append(btn)
         
-        # በየመስመሩ 2 በተን ሲሞላ ወደ አዲስ መስመር ያልፋል
         if len(row) == 2:
             keyboard.append(row)
             row = []
@@ -55,7 +59,6 @@ def get_menu_keyboard(chat_id):
     if row:
         keyboard.append(row)
         
-    # የቁጥጥር በተኖች (Checkout & Clear)
     keyboard.append([InlineKeyboardButton(text="🛒 ሂሳብ ድምር ክፈል (Checkout)", callback_data="checkout")])
     keyboard.append([InlineKeyboardButton(text="🗑️ ቅርጫት አጽዳ (Clear)", callback_data="clear_cart")])
     
@@ -65,7 +68,6 @@ def get_menu_keyboard(chat_id):
 async def start_command(message: Message):
     user_carts[message.chat.id] = {k: 0 for k in MENU}
     
-    # ሰላምታ እና ያንተን ስም የያዘ የክሬዲት መግለጫ
     welcome_text = (
         "እንኳን ወደ ABC ካፌ መደበኛ ማዘዣ ቦት በደህና መጡ! ☕🍔\n\n"
         "የምግብ ዝርዝር ለማየት እና ለማዘዝ /menu ይበሉ።\n\n"
@@ -160,21 +162,32 @@ async def successful_payment_handler(message: Message):
             
     order_str = "\n".join(order_details)
     
-    admin_message = (
-        f"🚨 **አዲስ ትዕዛዝ በክፍያ ደርሷል!** 🚨\n\n"
+    # 1. ለካሺር የሚሄድ መልዕክት (የገንዘብ መጠን እና አጠቃላይ ሂሳብ ያለው)
+    cashier_message = (
+        f"💰 **አዲስ ክፍያ ደርሷል (ለካሺር)** 💰\n\n"
         f"👤 **ደንበኛ፦** {customer_name} ({customer_username})\n"
         f"💵 **ጠቅላላ የተከፈለ፦** {total_amount:,.2f} ETB\n\n"
         f"🛍️ **የታዘዙ ምግቦች ዝርዝር፦**\n{order_str}\n\n"
-        f"✅ ክፍያው በ Chapa አውቶማቲክ ሲስተም በኩል ሙሉ በሙሉ ተረጋግጧል!"
+        f"✅ ክፍያው በ Chapa አውቶማቲክ ሲስተም ተረጋግጧል!"
+    )
+    
+    # 2. ለኩሽና የሚሄድ መልዕክት (ምግቦቹ በግልጽ የሚታዩበት የትዕዛዝ ማዘዣ)
+    kitchen_message = (
+        f"🍳 **አዲስ ትዕዛዝ ወደ ኩሽና ደርሷል!** 🍳\n\n"
+        f"👤 **ለደንበኛ፦** {customer_name}\n\n"
+        f"📋 **ማዘጋጀት ያለብዎት ምግቦች፦**\n{order_str}\n\n"
+        f"🚀 እባክዎ በፍጥነት አዘጋጅተው ያቅርቡ!"
     )
     
     try:
-        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_message, parse_mode="Markdown")
+        # መልዕክቱን ለሁለቱም በግል ይልካል
+        await bot.send_message(chat_id=CASHIER_CHAT_ID, text=cashier_message, parse_mode="Markdown")
+        await bot.send_message(chat_id=KITCHEN_CHAT_ID, text=kitchen_message, parse_mode="Markdown")
     except Exception as e:
-        logging.error(f"Failed to send order notification to admin: {e}")
+        logging.error(f"Failed to send order notifications: {e}")
 
     user_carts[chat_id] = {k: 0 for k in MENU}
-    await message.answer("🎉 ክፍያዎ አውቶማቲክ በሆነ መንገድ በተሳካ ሁኔታ ተረጋግጧል!\n\nትዕዛዝዎ ወደ ኩሽና ተላልፏል።")
+    await message.answer("🎉 ክፍያዎ አውቶማቲክ በሆነ መንገድ በተሳካ ሁኔታ ተረጋግጧል!\n\nምግብዎ እየተዘጋጀ ነው።")
 
 async def handle_render(request):
     return web.Response(text="Bot is running smoothly in Test Mode. Developed by Petros Beyene.")
