@@ -65,7 +65,7 @@ async def start_command(message: Message):
         "እንኳን ወደ ABC ካፌ መደበኛ ማዘዣ ቦት በደህና መጡ! ☕🍔\n\n"
         "የምግብ ዝርዝር ለማየት እና ለማዘዝ /menu ይበሉ።\n\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "💻 ** by:**  (@peterdec2)\n"
+        "💻 ** by:**  @peterdec2\n"
         
     )
     await message.answer(text=welcome_text, reply_markup=ReplyKeyboardRemove(), parse_mode="Markdown")
